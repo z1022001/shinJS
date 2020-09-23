@@ -21,6 +21,67 @@ class Command extends LineAPI {
         return displayName;
     }
 
+    async getGroups() {
+        let groupDatas = await this._getGroups(await this._getGroupsJoined());
+        let result = '';
+        for (let i in groupDatas) {
+            result += groupDatas[i].name + '\n' + groupDatas[i].id + '\n\n';
+        }
+
+        return result.trim();
+    }
+
+    async getGroupData(key) {
+        let payload = key || this.payload.join(' ');
+        let groupDatas = await this._getGroups([payload]);
+        if (groupDatas && groupDatas.length > 0) {
+            return groupDatas[0].name + '\n' + groupDatas[0].id;
+        }
+
+        groupDatas = await this._getGroups(await this._getGroupsJoined());
+        let result = '';
+        for (let i in groupDatas) {
+            if (groupDatas[i].name.indexOf(payload) != -1) {
+                result += groupDatas[i].name + '\n' + groupDatas[i].id + '\n\n';
+            }
+        }
+        if (result != '') {
+            return result.trim();
+        }
+
+        return "Can not found group #" + payload;
+    }
+
+    async getContacts() {
+        let contactDatas = await this._getContacts(await this._getAllContactIds());
+        let result = '';
+        for (let i in contactDatas) {
+            result += contactDatas[i].displayName + '\n' + contactDatas[i].mid + '\n\n';
+        }
+
+        return result.trim();
+    }
+
+    async getContactData(key) {
+        let payload = key || this.payload.join(' ');
+        let contactDatas = await this._getContacts([payload]);
+        if (contactDatas && contactDatas.length > 0) {
+            return contactDatas[0].displayName + '\n' + contactDatas[0].mid;
+        }
+
+        contactDatas = await this._getContacts(await this._getAllContactIds());
+        let result = '';
+        for (let i in contactDatas) {
+            if (contactDatas[i].displayName.indexOf(payload) != -1) {
+                result += contactDatas[i].displayName + '\n' + contactDatas[i].mid + '\n\n';
+            }
+        }
+        if (result != '') {
+            return result.trim();
+        }
+
+        return "Can not found contact #" + payload;
+    }
 
     async cancelMember() {
         let groupID;
