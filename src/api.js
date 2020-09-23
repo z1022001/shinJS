@@ -126,6 +126,7 @@ class LineAPI {
                     this.options.path = this.config.LINE_RS;
                     this.setTHttpClient(this.options);
                     const rsaCrypto = pinVerifier.getRSACrypto(credentials);
+                    this._authConn();
                     reqx.type = 0;
                     reqx.identityProvider = this.provider;
                     reqx.identifier = rsaCrypto.keyname;
@@ -135,21 +136,21 @@ class LineAPI {
                     reqx.systemName = 'Shinobi';
                     reqx.e2eeVersion = 0;
                     try {
-                        this._client.loginZ(reqx,
-                            (err, success) => {
-                                if (err) {
-                                    console.log('\n\n');
-                                    console.error("=> " + err.reason);
+                        this._authService.loginZ(reqx, (err, success) => {
+                            if (err) {
+                                console.log('\n\n');
+                                console.error("=> " + err.reason);
                                     process.exit();
                                 }
                                 this.options.path = this.config.LINE_COMMAND_PATH;
-                                this.setTHttpClient(this.options);
-                                this._authConn();
-                                this._client.pinCode = success.pinCode;
-                                console.info("\n\n=============================\nEnter This Pincode => " + success.pinCode + "\nto your mobile phone in 2 minutes\n=============================");
-                                this._checkLoginResultType(success.type, success);
-                                reqxy.type = 1;
-                                this._loginWithVerifier((verifierResult) => {
+                            this.setTHttpClient(this.options);
+                            this._authConn();
+                            this._client.pinCode = success.pinCode;
+                            let pinCodeString = "\n\n=============================\nEnter This Pincode => " + success.pinCode + "\nto your mobile phone in 2 minutes\n=============================";
+                            console.info(pinCodeString);
+                            this._checkLoginResultType(success.type, success);
+                            reqxy.type = 1;
+                            this._loginWithVerifier((verifierResult) => {
                                     this.options.path = this.config.LINE_COMMAND_PATH;
                                     this.setTHttpClient(this.options);
                                     config.tokenn = verifierResult.authToken;

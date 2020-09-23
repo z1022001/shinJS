@@ -12,7 +12,7 @@ class LineConnect extends LineAPI {
             this.email = options.email;
             this.password = options.password;
             this.certificate = options.certificate;
-            this.config.Headers['X-Line-Access'] = options.authToken;
+            this.config.Headers['X-Line-Access'] = options.authToken || "";
         }
     }
 
@@ -23,7 +23,7 @@ class LineConnect extends LineAPI {
                 this.certificate = res.certificate;
                 console.info(`[*] Token: ${this.authToken}`);
                 console.info(`[*] Certificate: ${res.certificate}`);
-                let { mid, displayName } = await this._client.getProfile(); config.botmid = mid;
+                let { mid, displayName } = await this._client.getProfile();
                 console.info(`[*] ID: ${mid}`);
                 console.info(`[*] Name: ${displayName}`);
                 await this._tokenLogin(this.authToken, this.certificate);
@@ -34,29 +34,59 @@ class LineConnect extends LineAPI {
                 console.info("[*] ChannelToken: " + icH.channelAccessToken);
                 console.info("[*] ChannelTokenExpire: " + expireCH + "\n");
                 console.info(`NOTE: Dont forget , put your mid and admin on variable 'myBot' in main.js \n`);
-                console.info(`=======SHINOBI JS BOT RUNNING======\n`);
+
+
                 resolve();
             });
         });
     }
 
     async startx() {
+        let res = null;
         if (this.authToken) {
-            return new Promise((resolve, reject) => {
-                this._tokenLogin(this.authToken, this.certificate);
-                this._chanConn();
-                this._channel.issueChannelToken("1341209850", (err, result) => {
+            res = await this.authTokenLogin();
+        } else if (this.password && this.email) {
+            res = await this.emailLogin();
+        } else {
+            res = await this.manualLogin();
+        }
+
+        if (res != null) {
+            let { mid } = await this._client.getProfile();
+            if (Array.isArray(config.botList) && config.botList.indexOf(mid) == -1) { config.botList.push(mid); }
+            else { config.botList = [mid]; }
+            res.botmid = mid;
+            console.info(`=======BOT RUNNING======\n`);
+        }
+        return res;
+    }
+
+    async authTokenLogin() {
+        console.log("authTokenLogin");
+        return new Promise((resolve, reject) => {
+            this._tokenLogin(this.authToken, this.certificate);
+            this._chanConn();
+            this._channel.issueChannelToken("1341209850", (err, result) => {
+                if (typeof (result) == "undefined") {
+                    console.log("authToken Login fail");
+                    resolve(null);
+                } else {
                     config.chanToken = result.channelAccessToken;
                     this._client.getLastOpRevision((err, result) => {
                         let xrx = result.toString().split(" ");
                         this.revision = xrx[0].toString() - 1;
                         resolve(this.longpoll());
                     })
-                });
+                }
             });
-        } else if (this.password && this.email) {
-            return new Promise((resolve, reject) => {
-                this._xlogin(this.email, this.password).then(() => {
+        });
+    }
+
+    async emailLogin() {
+        console.log("emailLogin");
+        return new Promise((resolve, reject) => {
+            this._xlogin(this.email, this.password)
+                .then(() => {
                     this._chanConn();
                     console.info("Success Login!");
                     console.info(`\n[*] Token: ${config.tokenn}`);
@@ -69,19 +99,30 @@ class LineConnect extends LineAPI {
                             resolve(this.longpoll());
                         })
                     });
-                })
-            });
-        } else {
-            return new Promise((resolve, reject) => {
-                this.getQrFirst().then(async (res) => {
+
+                }).catch(() => {
+                    console.log("email Login fail");
+                    resolve(null);
+                });
+        });
+    }
+
+    async manualLogin() {
+        console.log("manualLogin");
+        return new Promise((resolve, reject) => {
+            this.getQrFirst()
+                .then(async (res) => {
                     this._client.getLastOpRevision((err, result) => {
                         let xrx = result.toString().split(" ");
                         this.revision = xrx[0].toString() - 1;
                         resolve(this.longpoll());
                     })
+
+                }).catch(() => {
+                    console.log("email Login fail");
+                    resolve(null);
                 });
-            })
-        }
+        })
     }
 
     async fetchOps(rev) {

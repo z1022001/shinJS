@@ -14,6 +14,7 @@ const auth = {
 let client = new LineConnect(auth);
 
 client.startx().then(async (res) => {
+    LINE.botmid = res.botmid;
 
     while (true) {
         try {
