@@ -1,4 +1,5 @@
 const LineAPI = require('./api');
+const fs = require('fs');
 
 let exec = require('child_process').exec;
 
@@ -92,7 +93,7 @@ class Command extends LineAPI {
         let gid = groupID || this.messages.to;
         let { listPendingInvite } = await this.searchGroup(gid);
         if (listPendingInvite.length > 0) {
-            this._cancel(gid, listPendingInvite);
+            this._cancelInvitatio(gid, listPendingInvite);
         }
     }
 
@@ -118,9 +119,10 @@ class Command extends LineAPI {
         if (this.isAdminOrBot(this.messages._from)) {
             let [actions, status] = this.messages.text.split(' ');
             const action = actions.toLowerCase();
-            const state = status.toLowerCase() == 'on' ? 1 : 0;
-            this.stateStatus[action] = state;
-            this._sendMessage(this.messages, `Status: \n${JSON.stringify(this.stateStatus)}`);
+            if (status) {
+                this.stateStatus[action] = status.toLowerCase() == 'on' ? 1 : 0;
+            }
+            this._sendMessage(this.messages, `Status: \n${JSON.stringify(this.stateStatus, null, 4)}`);
         } else {
             this._sendMessage(this.messages, `You Are Not Admin`);
         }
@@ -147,7 +149,7 @@ class Command extends LineAPI {
         })
         return {
             names: mentionStrings.slice(1),
-            cmddata: { MENTION: `{"MENTIONEES":[${mentionMember}]}` }
+            cmddata: { MENTION: `{"MENTIONEES":[${mentionMember.slice(0, 20)}]}` }
         }
     }
 
@@ -195,16 +197,12 @@ class Command extends LineAPI {
     }
 
     vn() {
-        this._sendFile(this.messages, `${__dirname}/../download/${this.payload.join(' ')}.m4a`, 3);
+        this._sendFile(this.messages, `${__dirname}/download/${this.payload.join(' ')}.m4a`, 3);
     }
 
     checkKernel() {
         exec('uname -a', (err, sto) => {
-            if (err) {
-                this._sendMessage(this.messages, err);
-                return
-            }
-            this._sendMessage(this.messages, sto);
+            this._sendMessage(this.messages, err ? err : sto);
             return;
         });
     }
@@ -267,18 +265,19 @@ class Command extends LineAPI {
 
     searchLocalImage() {
         let name = this.payload.join(' ');
-        let dirName = `${__dirname}/../download/${name}.jpg`;
-        try {
+        let dirName = `${__dirname}/download/${name}.jpg`;
+        if (fs.existsSync(dirName)) {
             this._sendImage(this.messages, dirName);
-        } catch (error) {
-            this._sendImage(this.messages, `No Photo #${name} Uploaded `);
+        } else {
+            this._sendMessage(this.messages, `No Photo #${name} Uploaded `);
         }
         return;
 
     }
 
-    async joinQr() {
-        const [ticketId] = this.payload[0].split('g/').splice(-1);
+    async joinQr(url) {
+        let payload = url || this.payload[0];
+        const [ticketId] = payload.split('g/').splice(-1);
         let { id } = await this._findGroupByTicket(ticketId);
         await this._acceptGroupInvitationByTicket(id, ticketId);
         return;
@@ -355,7 +354,7 @@ class Command extends LineAPI {
         let rec = await this.recheck(this.checkReader, this.messages.to);
         const mentions = await this.mention(rec);
         this.messages.contentMetadata = mentions.cmddata;
-        await this._sendMessage(this.messages, mentions.names.join(''));
+        await this._sendMessage(this.messages, mentions.names.join('').trim());
         return;
     }
 

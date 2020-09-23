@@ -179,6 +179,32 @@ class LINE extends Command {
 
     }
 
+    async getProfile() {
+        let { displayName } = await this._myProfile();
+        return `${displayName}\n${this.botmid}`;
+    }
+
+    async push(userId, msg) {
+        let message = new Message();
+        message._from = this.botmid;
+        message.to = userId;
+        message.text = msg;
+        await this._client.sendMessage(0, message);
+        return;
+    }
+
+    async pushall(msg) {
+        let groups = await line.abot._getGroupsJoined();;
+        for (let i in groups) {
+            let group = groups[i];
+            let message = new Message();
+            message._from = this.botmid;
+            message.to = group;
+            message.text = msg;
+            await this._client.sendMessage(0, message);
+        }
+        return;
+    }
 }
 
 module.exports = LINE;

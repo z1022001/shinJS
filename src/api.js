@@ -206,7 +206,7 @@ class LineAPI {
     }
 
     async _sendMessage(message, txt, seq = 0) {
-        message.text = txt;
+        message.text = txt ? (typeof (txt) == 'string' ? txt : txt.toString()) : null; // TalkServiceClient.prototype.sendMessage
         return await this._client.sendMessage(0, message);
     }
 
@@ -214,7 +214,7 @@ class LineAPI {
         return this._client.kickoutFromGroup(0, group, memid);
     }
 
-    _cancel(groupid, member) {
+    _cancelInvitatio(groupid, member) {
         return this._client.cancelGroupInvitation(0, groupid, member);
     }
 
@@ -247,7 +247,7 @@ class LineAPI {
 
     }
 
-    async _refrehGroup() {
+    async _refreshGroup() {
         await this._getGroupsInvited();
         await this._getGroupsJoined();
         return;
@@ -272,7 +272,7 @@ class LineAPI {
 
     async _acceptGroupInvitation(groupid) {
         this._client.acceptGroupInvitation(0, groupid);
-        await this._refrehGroup();
+        await this._refreshGroup();
         return;
     }
 
@@ -320,7 +320,7 @@ class LineAPI {
     async _sendFileByUrl(message, uri) {
         let media = 1;
         if (!fs.existsSync(__dirname + '/tmp')) {
-            await fs.mkdirSync(__dirname + '/tmp');
+            fs.mkdirSync(__dirname + '/tmp');
         }
         let head = await unirest.head(uri, async (res) => {
             let formatFile = res.headers['content-type'].split('/')[1].toLowerCase();
@@ -348,7 +348,7 @@ class LineAPI {
                 formatType = 'jpg';
                 break;
         }
-        let dir = __dirname + '/../download';
+        let dir = __dirname + '/download';
         if (!fs.existsSync(dir)) {
             await fs.mkdirSync(dir);
         }
@@ -390,6 +390,8 @@ class LineAPI {
 
         const filepath = path.resolve(__dirname, filepaths)
         console.log('File Locate on', filepath);
+        if (!fs.existsSync(filepath)) { return; }
+
         fs.readFile(filepath, async (err, bufs) => {
             let imgID = await this._client.sendMessage(0, M);
             const data = {
