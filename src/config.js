@@ -35,7 +35,7 @@ const config = {
   LINE_SESSION_LINE_URL: '/authct/v1/keys/line',
   LINE_SESSION_NAVER_URL: '/authct/v1/keys/naver',
   LINE_POST_CONTENT_URL: 'https://os.line.naver.jp/talk/m/upload.nhn',
-  LINE_POST_CONTENT_URL_2ND: 'https://obs-sg.line-apps.com/talk/m/upload.nhn'
+  LINE_POST_CONTENT_URL_2ND: 'https://obs-sg.line-apps.com/talk/m/upload.nhn',
   X_LINE_APP: 'CHROMEOS 2.3.2 Chrome OS 1',
   ip: '8.8.8.8',
   version: '0.0.2',
