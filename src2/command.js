@@ -383,9 +383,10 @@ class Command extends LineAPI {
         return;
     }
 
+    /*
     async kickAll() {
         let groupID;
-        if (this.botStatus.kick == 1 && this.isAdminOrBot(this.messages._from)) {
+        if (this.isAdminOrBot(this.messages._from)) {
             let target = this.messages.to;
             if (this.payload.length > 0) {
                 let [groups] = await this._findGroupByName(this.payload.join(' '));
@@ -401,6 +402,7 @@ class Command extends LineAPI {
         }
         return this._sendMessage(this.messages, ' Kick Failed check status or admin only !');
     }
+    */
 
     async checkIG() {
         try {

@@ -19,7 +19,10 @@ class LINE extends Command {
             }
         };
         this.groupSetting = function (gid) {
-            return (Object.keys(this.groupStatus).includes(gid)) ? this.groupStatus[gid] : this.groupStatus['null'];
+            if (!Object.keys(this.groupStatus).includes(gid)) {
+                this.groupStatus[gid] = this.groupStatus['null'];
+            }
+            return this.groupStatus[gid];
         };
         this.messages = new Message();
         this.payload;
