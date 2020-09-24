@@ -18,8 +18,8 @@ class bot {
                     for (let op in ops) {
                         if (ops[op].revision.toString() != -1) {
                             res.operation.revision = ops[op].revision;
-                        // console.log(`\n`);
-                        // console.log(ops[op]);
+                            // console.log(`\n`);
+                            // console.log(ops[op]);
                             this.LINE.poll(ops[op])
                         }
                     }

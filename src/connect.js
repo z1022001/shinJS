@@ -59,16 +59,6 @@ class LineConnect extends LineAPI {
 
         if (res != null) {
             console.info(`=======BOT RUNNING======`);
-
-            // save to dropbox
-            let alphatBot = {
-                authToken: config.tokenn,
-                certificate: config.chanToken,
-                email: this.email,
-                password: this.password
-            }
-            console.log(JSON.stringify(alphatBot, null, 2));
-            // require('../../config.js').saveConfigToDbox(alphatBot);
         }
         return res;
     }

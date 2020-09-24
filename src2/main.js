@@ -6,12 +6,20 @@ class LINE extends Command {
     constructor() {
         super();
         this.checkReader = [];
-        this.stateStatus = {
-            cancelInvitation: 0,
+        this.botStatus = {
+            // cancelInvitation: 0,
             acceptInvitation: 1,    // auto join group
-            antiKick: 0,    // anti non-admin kick someone
-            autoKick: 0,        // kick kicker
-            disableQrcode: 0, // auto disable QRcode
+        };
+
+        this.groupStatus = {
+            'null': {
+                antiKick: 0,    // anti non-admin kick someone
+                autoKick: 0,        // kick kicker
+                disableQrcode: 0, // auto disable QRcode
+            }
+        };
+        this.groupSetting = function (gid) {
+            return (Object.keys(this.groupStatus).includes(gid)) ? this.groupStatus[gid] : this.groupStatus['null'];
         };
         this.messages = new Message();
         this.payload;
@@ -65,9 +73,9 @@ class LINE extends Command {
 
         // 'NOTIFIED_UPDATE_GROUP' : 11,
         if (operation.type == OpType['NOTIFIED_UPDATE_GROUP']) {
-            if (!this.isAdminOrBot(operation.param2) && this.stateStatus.disableQrcode) {
+            if (!this.isAdminOrBot(operation.param2) && this.groupSetting(group).disableQrcode) {
                 // kick who enable QRcode
-                if (this.stateStatus.autoKick) {
+                if (this.groupSetting(group).autoKick) {
                     this._kickMember(operation.param1, [operation.param2]);
                 }
                 this.messages.to = operation.param1;
@@ -85,11 +93,11 @@ class LINE extends Command {
             let kicker = operation.param2;
             let kicked = operation.param3;
 
-            if (this.stateStatus.antiKick) {
+            if (this.groupSetting(group).antiKick) {
                 if (!this.isAdminOrBot(kicker)) {
                     this._invite(group, [kicked]);
 
-                    if (this.stateStatus.autoKick) {
+                    if (this.groupSetting(group).autoKick) {
                         this._kickMember(group, [kicker]);
                     }
                 }
@@ -123,12 +131,12 @@ class LINE extends Command {
 
             /*
             // cancel invitation
-            if (this.stateStatus.cancelInvitation && !this.isAdminOrBot(operation.param2) && !this.isAdminOrBot(operation.param3)) {
+            if (this.botStatus.cancelInvitation && !this.isAdminOrBot(operation.param2) && !this.isAdminOrBot(operation.param3)) {
                 this._cancelInvitatio(operation.param1, [operation.param3]);
             }
             */
 
-            if (this.stateStatus.acceptInvitation || this.isAdminOrBot(operation.param2)) {
+            if (this.botStatus.acceptInvitation || this.isAdminOrBot(operation.param2)) {
                 this._acceptGroupInvitation(operation.param1);
             } else {
                 this._rejectGroupInvitation(operation.param1);
@@ -169,7 +177,7 @@ class LINE extends Command {
 
         if (this.isAdminOrBot(sender)) {
 
-            this.command('.status', `Your Status: ${JSON.stringify(this.stateStatus, null, 2)}`);
+            this.command('.status', this.getStatus.bind(this));
             this.command('.speed', this.getSpeed.bind(this));
             this.command('.kernel', this.checkKernel.bind(this));   // only for Linux
             this.command(`.set`, this.setReader.bind(this));
@@ -178,10 +186,10 @@ class LINE extends Command {
             this.command('.myid', `Your ID: ${sender}`);
             this.command(`.creator`, this.creator.bind(this));
 
-            this.command(`cancelInvitation ${payload}`, this.OnOff.bind(this));
+            // this.command(`cancelInvitation ${payload}`, this.OnOff.bind(this));
             this.command(`acceptInvitation ${payload}`, this.OnOff.bind(this));
-            this.command(`antikick ${payload}`, this.OnOff.bind(this));
-            this.command(`kick ${payload}`, this.OnOff.bind(this));
+            this.command(`antiKick ${payload}`, this.OnOff.bind(this));
+            this.command(`autoKick ${payload}`, this.OnOff.bind(this));
             this.command(`disableQrcode ${payload}`, this.OnOff.bind(this));
 
             this.command(`.left ${payload}`, this.leftGroupByName.bind(this));
