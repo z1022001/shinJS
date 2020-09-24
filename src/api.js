@@ -31,8 +31,8 @@ class LineAPI {
         this.setTHttpClient();
         this.axz = false;
         this.axy = false;
-        this.gdLine = "http://ga2.line.naver.jp";
-        this.gdLine2 = "http://gd2.line.naver.jp";
+        this.gdLine = "http://gd2.line.naver.jp";
+        this.gdLine2 = "http://gf.line.naver.jp";
         this.botmid = '';
     }
 
@@ -43,10 +43,12 @@ class LineAPI {
         path: this.config.LINE_HTTP_URL,
         https: true
     }) {
-        options.headers['X-Line-Application'] = 'CHROMEOS\t2.3.2\tChrome_OS\t1';
+        //options.headers['X-Line-Application'] = 'CHROMEOS\t2.1.0\tChrome_OS\t1';
+        options.headers['X-Line-Application'] = 'IOSIPAD 7.14.0 iPhone OS 10.12.0';
+        //options.headers['X-Line-Application'] = 'DESKTOPMAC\t5.3.3-YOSEMITE-x64\tMAC\t10.12.0';
         this.options = options;
         this.connection =
-            thrift.createHttpConnection(this.config.LINE_DOMAIN_2ND, 443, this.options);
+            thrift.createHttpConnection(this.config.LINE_DOMAIN_3RD, 443, this.options);
         this.connection.on('error', (err) => {
             console.log('err', err);
             return err;
@@ -85,12 +87,12 @@ class LineAPI {
     _qrCodeLogin() {
         this.setTHttpClient();
         return new Promise((resolve, reject) => {
-            this._client.getAuthQrcode(true, 'Shinobi-PC', (err, result) => {
+            this._client.getAuthQrcode(true, 'Alfathdirk-PC', (err, result) => {
                 const qrcodeUrl = `line://au/q/${result.verifier}`;
                 qrcode.generate(qrcodeUrl, { small: true });
                 console.info(`\n\nlink qr code is: ${qrcodeUrl}`)
                 Object.assign(this.config.Headers, { 'X-Line-Access': result.verifier });
-                unirest.get('https://ga2.line.naver.jp/Q')
+                unirest.get('https://gd2.line.naver.jp/Q')
                     .headers(this.config.Headers)
                     .timeout(120000)
                     .end(async (res) => {
@@ -106,7 +108,7 @@ class LineAPI {
                             this.options.headers['X-Line-Access'] = config.tokenn;
                             this.options.path = this.config.LINE_COMMAND_PATH;
                             this.setTHttpClient(this.options);
-                            this.options.headers['User-Agent'] = 'Line/2.3.2';
+                            this.options.headers['User-Agent'] = 'Line/7.18.1';
                             this.axz = true;
                             this.setTHttpClient(this.options);
                             this.axz = false;
@@ -134,7 +136,7 @@ class LineAPI {
                     reqx.password = rsaCrypto.credentials;
                     reqx.keepLoggedIn = true;
                     reqx.accessLocation = this.config.ip;
-                    reqx.systemName = 'Shinobi';
+                    reqx.systemName = 'LineAlphatFork';
                     reqx.e2eeVersion = 0;
                     try {
                         this._authService.loginZ(reqx, (err, success) => {
@@ -357,7 +359,7 @@ class LineAPI {
                 formatType = 'jpg';
                 break;
         }
-        let dir = __dirname + '/download';
+        let dir =`${__dirname}/../download`;
         if (!fs.existsSync(dir)) {
             await fs.mkdirSync(dir);
         }

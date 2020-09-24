@@ -5,7 +5,6 @@ const { Message, OpType, Location, Profile } = require('../curve-thrift/line_typ
 class LINE extends Command {
     constructor() {
         super();
-        this.receiverID = '';
         this.checkReader = [];
         this.stateStatus = {
             cancelInvitation: 0,
@@ -25,7 +24,7 @@ class LINE extends Command {
     }
 
     get myBot() {
-        const bot = [this.botmid];
+        const bot = ['u33a9a527c6ac1b24e0e4e35dde60c79d', 'uf0073964d53b22f4f404a8fb8f7a9e3e'];
         return bot;
     }
     get myAdmin() {
@@ -44,10 +43,11 @@ class LINE extends Command {
     getOprationType(operations) {
         for (let key in OpType) {
             if (operations.type == OpType[key]) {
+                /*
                 if (key !== 'NOTIFIED_UPDATE_PROFILE') {
                     console.info(`[* ${operations.type} ] ${key} `);
                 }
-
+                */
                 return key;
             }
         }
@@ -57,7 +57,7 @@ class LINE extends Command {
         // 'SEND_MESSAGE' : 25, 'RECEIVE_MESSAGE' : 26,
         if (operation.type == OpType['SEND_MESSAGE'] || operation.type == OpType['RECEIVE_MESSAGE']) {
             let message = new Message(operation.message);
-            this.receiverID = message.to = (operation.message.to === this.botmid) ? operation.message._from : operation.message.to;
+            message.to = (operation.message.to === this.botmid) ? operation.message._from : operation.message.to;
             Object.assign(message, { ct: operation.createdTime.toString() });
             // if (!this.isBot(operation.message._from))   // not from bot
             this.textMessage(message);
@@ -121,10 +121,12 @@ class LINE extends Command {
         // 'NOTIFIED_INVITE_INTO_GROUP' : 13,
         if (operation.type == OpType['NOTIFIED_INVITE_INTO_GROUP']) { // diinvite
 
-            // // cancel invitation
-            // if (this.stateStatus.cancelInvitation && !this.isAdminOrBot(operation.param2) && !this.isAdminOrBot(operation.param3)) {
-            //     this._cancelInvitatio(operation.param1, [operation.param3]);
-            // }
+            /*
+            // cancel invitation
+            if (this.stateStatus.cancelInvitation && !this.isAdminOrBot(operation.param2) && !this.isAdminOrBot(operation.param3)) {
+                this._cancelInvitatio(operation.param1, [operation.param3]);
+            }
+            */
 
             if (this.stateStatus.acceptInvitation || this.isAdminOrBot(operation.param2)) {
                 this._acceptGroupInvitation(operation.param1);
@@ -132,7 +134,7 @@ class LINE extends Command {
                 this._rejectGroupInvitation(operation.param1);
             }
         }
-        this.getOprationType(operation);
+        // this.getOprationType(operation);
     }
 
     async command(msg, reply) {
@@ -162,7 +164,7 @@ class LINE extends Command {
         let receiver = messages.to;
         let sender = messages._from;
 
-        this.command('Chao', ['Hi', 'who is this?']);
+        this.command('Hello', ['Hi', 'who is this?']);
         this.command('who is bot', this.getProfile.bind(this));
 
         if (this.isAdminOrBot(sender)) {
@@ -202,6 +204,7 @@ class LINE extends Command {
             this.command(`.group ${payload}`, this.getGroupData.bind(this));
             this.command('.contacts', this.getContacts.bind(this));
             this.command(`.contact ${payload}`, this.getContactData.bind(this));
+            this.command('.debug', this.debug.bind(this));
         }
 
         /*
@@ -231,6 +234,15 @@ class LINE extends Command {
         //     this._sendMessage(seq,lyrics);
         // }
 
+    }
+
+    async debug() {
+        let message1 = new Message();
+        message1._from = this.botmid;
+        message1.to = 'u33a9a527c6ac1b24e0e4e35dde60c79d';
+        message1.text = "debug test";
+        await this._client.sendMessage(0, message1);
+        return;
     }
 
     async push(userId, msg) {

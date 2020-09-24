@@ -197,7 +197,7 @@ class Command extends LineAPI {
     }
 
     vn() {
-        this._sendFile(this.messages, `${__dirname}/download/${this.payload.join(' ')}.m4a`, 3);
+        this._sendFile(this.messages, `${__dirname}/../download/${this.payload.join(' ')}.m4a`, 3);
     }
 
     checkKernel() {
@@ -226,8 +226,8 @@ class Command extends LineAPI {
             contentPreview: null,
             contentMetadata:
             {
-                mid: 'uc903926f2160feb965fbb3144da8f490',
-                displayName: 'Aka Shinobi'
+                mid: 'u236b88bf1eac2b90e848a6198152e647',
+                displayName: 'Alfath Dirk'
             }
         }
         Object.assign(this.messages, msg);
@@ -265,7 +265,7 @@ class Command extends LineAPI {
 
     searchLocalImage() {
         let name = this.payload.join(' ');
-        let dirName = `${__dirname}/download/${name}.jpg`;
+        let dirName = `${__dirname}/../download/${name}.jpg`;
         if (fs.existsSync(dirName)) {
             this._sendImage(this.messages, dirName);
         } else {
