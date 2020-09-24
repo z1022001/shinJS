@@ -5,3 +5,5 @@ src/bot.js
 src/tmp
 test.js
 download/
+
+.vscode/

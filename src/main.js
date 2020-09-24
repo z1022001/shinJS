@@ -1,4 +1,5 @@
 const Command = require('./command');
+const config = require('./config');
 const { Message, OpType, Location, Profile } = require('../curve-thrift/line_types');
 
 class LINE extends Command {
@@ -7,10 +8,13 @@ class LINE extends Command {
         this.receiverID = '';
         this.checkReader = [];
         this.stateStatus = {
-            cancel: 0,
-            kick: 0,
+            cancelInvitation: 0,
+            acceptInvitation: 1,    // auto join group
+            antiKick: 0,    // anti non-admin kick someone
+            autoKick: 0,        // kick kicker
+            disableQrcode: 0, // auto disable QRcode
         };
-        this.messages;
+        this.messages = new Message();
         this.payload;
         this.stateUpload = {
             file: '',
@@ -20,14 +24,21 @@ class LINE extends Command {
         }
     }
 
-
     get myBot() {
-        const bot = ['u1cab5ef6299af4713353b9843479952d', 'u22d94aac4e1659eb6f375ffc7cb17a53'];
+        const bot = [this.botmid];
         return bot;
+    }
+    get myAdmin() {
+        const admin = ['u33a9a527c6ac1b24e0e4e35dde60c79d'];
+        return admin;
+    }
+
+    isBot(param) {
+        return this.myBot.includes(param);
     }
 
     isAdminOrBot(param) {
-        return this.myBot.includes(param);
+        return this.myAdmin.includes(param) || this.myBot.includes(param);
     }
 
     getOprationType(operations) {
@@ -36,43 +47,58 @@ class LINE extends Command {
                 if (key !== 'NOTIFIED_UPDATE_PROFILE') {
                     console.info(`[* ${operations.type} ] ${key} `);
                 }
+
+                return key;
             }
         }
     }
 
     poll(operation) {
-        if (operation.type == 25 || operation.type == 26) {
+        // 'SEND_MESSAGE' : 25, 'RECEIVE_MESSAGE' : 26,
+        if (operation.type == OpType['SEND_MESSAGE'] || operation.type == OpType['RECEIVE_MESSAGE']) {
             let message = new Message(operation.message);
-            this.receiverID = message.to = (operation.message.to === this.myBot[0]) ? operation.message._from : operation.message.to;
+            this.receiverID = message.to = (operation.message.to === this.botmid) ? operation.message._from : operation.message.to;
             Object.assign(message, { ct: operation.createdTime.toString() });
-            this.textMessage(message)
+            // if (!this.isBot(operation.message._from))   // not from bot
+            this.textMessage(message);
         }
 
-        if (operation.type == 13 && this.stateStatus.cancel == 1) {
-            this._cancel(operation.param2, operation.param1);
-
-        }
-
-        if (operation.type == 11 && !this.isAdminOrBot(operation.param2) && this.stateStatus.qrp == 1) {
-            this._kickMember(operation.param1, [operation.param2]);
-            this.messages.to = operation.param1;
-            this.qrOpenClose();
-        }
-
-        if (operation.type == 19) { //ada kick
-            // op1 = group nya
-            // op2 = yang 'nge' kick
-            // op3 = yang 'di' kick
-            if (this.isAdminOrBot(operation.param3)) {
-                this._invite(operation.param1, [operation.param3]);
+        // 'NOTIFIED_UPDATE_GROUP' : 11,
+        if (operation.type == OpType['NOTIFIED_UPDATE_GROUP']) {
+            if (!this.isAdminOrBot(operation.param2) && this.stateStatus.disableQrcode) {
+                // kick who enable QRcode
+                if (this.stateStatus.autoKick) {
+                    this._kickMember(operation.param1, [operation.param2]);
+                }
+                this.messages.to = operation.param1;
+                this.qrOpenClose(); // disable QRcode
             }
-            if (!this.isAdminOrBot(operation.param2)) {
-                this._kickMember(operation.param1, [operation.param2]);
-            }
-
         }
 
-        if (operation.type == 55) { //ada reader
+        // 'NOTIFIED_KICKOUT_FROM_GROUP' : 19,
+        if (operation.type == OpType['NOTIFIED_KICKOUT_FROM_GROUP']) {
+            // anti kick
+            // param1 = group id
+            // param2 = who kick someone
+            // param3 = 'someone'
+            let group = operation.param1;
+            let kicker = operation.param2;
+            let kicked = operation.param3;
+
+            if (this.stateStatus.antiKick) {
+                if (!this.isAdminOrBot(kicker)) {
+                    this._invite(group, [kicked]);
+
+                    if (this.stateStatus.autoKick) {
+                        this._kickMember(group, [kicker]);
+                    }
+                }
+            }
+        }
+
+        // 'NOTIFIED_READ_MESSAGE' : 55,
+        if (operation.type == OpType['NOTIFIED_READ_MESSAGE']) {
+            //ada reader
             const idx = this.checkReader.findIndex((v) => {
                 if (v.group == operation.param1) {
                     return v
@@ -92,26 +118,36 @@ class LINE extends Command {
             }
         }
 
-        if (operation.type == 13) { // diinvite
-            if (this.isAdminOrBot(operation.param2)) {
-                return this._acceptGroupInvitation(operation.param1);
+        // 'NOTIFIED_INVITE_INTO_GROUP' : 13,
+        if (operation.type == OpType['NOTIFIED_INVITE_INTO_GROUP']) { // diinvite
+
+            // // cancel invitation
+            // if (this.stateStatus.cancelInvitation && !this.isAdminOrBot(operation.param2) && !this.isAdminOrBot(operation.param3)) {
+            //     this._cancelInvitatio(operation.param1, [operation.param3]);
+            // }
+
+            if (this.stateStatus.acceptInvitation || this.isAdminOrBot(operation.param2)) {
+                this._acceptGroupInvitation(operation.param1);
             } else {
-                return this._cancel(operation.param1, this.myBot);
+                this._rejectGroupInvitation(operation.param1);
             }
         }
         this.getOprationType(operation);
     }
 
-    command(msg, reply) {
+    async command(msg, reply) {
         if (this.messages.text !== null) {
-            if (this.messages.text === msg.trim()) {
+            if (this.messages.text.toUpperCase().trim() == msg.toUpperCase().trim()) {
                 if (typeof reply === 'function') {
-                    reply();
+                    let result = await reply();
+                    if (typeof result !== 'undefined') {    // need to check?
+                        this._sendMessage(this.messages, result);
+                    }
                     return;
                 }
                 if (Array.isArray(reply)) {
-                    reply.map((v) => {
-                        this._sendMessage(this.messages, v);
+                    reply.map(async (v) => {
+                        await this._sendMessage(this.messages, v);
                     })
                     return;
                 }
@@ -124,35 +160,52 @@ class LINE extends Command {
         this.messages = messages;
         let payload = (this.messages.text !== null) ? this.messages.text.split(' ').splice(1).join(' ') : '';
         let receiver = messages.to;
-        let sender = messages.from;
+        let sender = messages._from;
 
-        this.command('Halo', ['halo juga', 'ini siapa?']);
-        this.command('kamu siapa', this.getProfile.bind(this));
-        this.command('.status', `Your Status: ${JSON.stringify(this.stateStatus)}`);
-        this.command(`.left ${payload}`, this.leftGroupByName.bind(this));
-        this.command('.speed', this.getSpeed.bind(this));
-        this.command('.kernel', this.checkKernel.bind(this));
-        this.command(`kick ${payload}`, this.OnOff.bind(this));
-        this.command(`cancel ${payload}`, this.OnOff.bind(this));
-        this.command(`qrp ${payload}`, this.OnOff.bind(this));
-        this.command(`.kickall ${payload}`, this.kickAll.bind(this));
-        this.command(`.cancelall ${payload}`, this.cancelMember.bind(this));
-        this.command(`.set`, this.setReader.bind(this));
-        this.command(`.recheck`, this.rechecks.bind(this));
-        this.command(`.clearall`, this.clearall.bind(this));
-        this.command('.myid', `Your ID: ${messages.from}`)
-        this.command(`.ip ${payload}`, this.checkIP.bind(this))
-        this.command(`.ig ${payload}`, this.checkIG.bind(this))
-        this.command(`.qr ${payload}`, this.qrOpenClose.bind(this))
-        this.command(`.joinqr ${payload}`, this.joinQr.bind(this));
-        this.command(`.spam ${payload}`, this.spamGroup.bind(this));
-        this.command(`.creator`, this.creator.bind(this));
+        this.command('Chao', ['Hi', 'who is this?']);
+        this.command('who is bot', this.getProfile.bind(this));
 
-        this.command(`pap ${payload}`, this.searchLocalImage.bind(this));
-        this.command(`.upload ${payload}`, this.prepareUpload.bind(this));
-        this.command(`vn ${payload}`, this.vn.bind(this));
+        if (this.isAdminOrBot(sender)) {
 
-        if (messages.contentType == 13) {
+            this.command('.status', `Your Status: ${JSON.stringify(this.stateStatus, null, 2)}`);
+            this.command('.speed', this.getSpeed.bind(this));
+            this.command('.kernel', this.checkKernel.bind(this));   // only for Linux
+            this.command(`.set`, this.setReader.bind(this));
+            this.command(`.recheck`, this.rechecks.bind(this));
+            this.command(`.clearall`, this.clearall.bind(this));
+            this.command('.myid', `Your ID: ${sender}`);
+            this.command(`.creator`, this.creator.bind(this));
+
+            this.command(`cancelInvitation ${payload}`, this.OnOff.bind(this));
+            this.command(`acceptInvitation ${payload}`, this.OnOff.bind(this));
+            this.command(`antikick ${payload}`, this.OnOff.bind(this));
+            this.command(`kick ${payload}`, this.OnOff.bind(this));
+            this.command(`disableQrcode ${payload}`, this.OnOff.bind(this));
+
+            this.command(`.left ${payload}`, this.leftGroupByName.bind(this));
+            this.command(`.cancelall ${payload}`, this.cancelMember.bind(this));
+            this.command(`.qr ${payload}`, this.qrOpenClose.bind(this))
+            this.command(`.joinqr ${payload}`, this.joinQr.bind(this));
+
+            this.command(`pap ${payload}`, this.searchLocalImage.bind(this));
+
+            /*
+            this.command(`.kickall ${payload}`, this.kickAll.bind(this));
+            this.command(`.spam ${payload}`, this.spamGroup.bind(this));
+            this.command(`.ip ${payload}`, this.checkIP.bind(this));    // only for Linux
+            this.command(`.ig ${payload}`, this.checkIG.bind(this));    // only for Linux
+            this.command(`.upload ${payload}`, this.prepareUpload.bind(this));
+            this.command(`vn ${payload}`, this.vn.bind(this));
+            */
+
+            this.command('.groups', this.getGroups.bind(this));
+            this.command(`.group ${payload}`, this.getGroupData.bind(this));
+            this.command('.contacts', this.getContacts.bind(this));
+            this.command(`.contact ${payload}`, this.getContactData.bind(this));
+        }
+
+        /*
+        if (operation.type == OpType['NOTIFIED_INVITE_INTO_GROUP']) {
             messages.contentType = 0;
             if (!this.isAdminOrBot(messages.contentMetadata.mid)) {
                 this._sendMessage(messages, messages.contentMetadata.mid);
@@ -171,17 +224,13 @@ class LINE extends Command {
             this.resetStateUpload();
             return;
         }
+        */
 
         // if(cmd == 'lirik') {
         //     let lyrics = await this._searchLyrics(payload);
         //     this._sendMessage(seq,lyrics);
         // }
 
-    }
-
-    async getProfile() {
-        let { displayName } = await this._myProfile();
-        return `${displayName}\n${this.botmid}`;
     }
 
     async push(userId, msg) {

@@ -33,6 +33,7 @@ class LineAPI {
         this.axy = false;
         this.gdLine = "http://ga2.line.naver.jp";
         this.gdLine2 = "http://gd2.line.naver.jp";
+        this.botmid = '';
     }
 
     setTHttpClient(options = {
@@ -140,24 +141,32 @@ class LineAPI {
                             if (err) {
                                 console.log('\n\n');
                                 console.error("=> " + err.reason);
-                                    process.exit();
-                                }
-                                this.options.path = this.config.LINE_COMMAND_PATH;
+                                process.exit();
+                            }
+                            this.options.path = this.config.LINE_COMMAND_PATH;
                             this.setTHttpClient(this.options);
                             this._authConn();
                             this._client.pinCode = success.pinCode;
-                            let pinCodeString = "\n\n=============================\nEnter This Pincode => " + success.pinCode + "\nto your mobile phone in 2 minutes\n=============================";
+                            
+                            let pinCodeString =
+                                "\n\n" +
+                                "=============================\n" +
+                                `${id}\n` +
+                                `Enter This Pincode => ${success.pinCode}\n` +
+                                "to your mobile phone in 2 minutes\n" +
+                                "=============================";
+
                             console.info(pinCodeString);
                             this._checkLoginResultType(success.type, success);
                             reqxy.type = 1;
                             this._loginWithVerifier((verifierResult) => {
-                                    this.options.path = this.config.LINE_COMMAND_PATH;
-                                    this.setTHttpClient(this.options);
-                                    config.tokenn = verifierResult.authToken;
-                                    this._checkLoginResultType(verifierResult.type, verifierResult);
-                                    resolve(verifierResult);
-                                });
+                                this.options.path = this.config.LINE_COMMAND_PATH;
+                                this.setTHttpClient(this.options);
+                                config.tokenn = verifierResult.authToken;
+                                this._checkLoginResultType(verifierResult.type, verifierResult);
+                                resolve(verifierResult);
                             });
+                        });
                     } catch (error) {
                         console.log('error');
                         console.log(error);
@@ -411,7 +420,7 @@ class LineAPI {
                         return;
                     }
                     console.log(res.headers);
-                    if (filepath.search(/download\//g) === -1) {
+                    if (false && filepath.search(/download\//g) === -1) {
                         fs.unlink(filepath, (err) => {
                             if (err) {
                                 console.log('err on upload', err);

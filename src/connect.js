@@ -52,11 +52,7 @@ class LineConnect extends LineAPI {
         }
 
         if (res != null) {
-            let { mid } = await this._client.getProfile();
-            if (Array.isArray(config.botList) && config.botList.indexOf(mid) == -1) { config.botList.push(mid); }
-            else { config.botList = [mid]; }
-            res.botmid = mid;
-            console.info(`=======BOT RUNNING======\n`);
+            console.info(`=======BOT RUNNING======`);
         }
         return res;
     }
