@@ -8,12 +8,12 @@ let config = {};
 
 const loadConfigFromDbox = async () => {
     try {
-        let rawData = Buffer.from(await require("./dbox.js").fileDownload("AntiKick.json"), "binary").toString();
-        // 解密
-        let key = process.env.LINE_ALPHAT_JSONKEY;
-        let data = crypto.decrypt(rawData, key);
+        // let rawData = Buffer.from(await require("./dbox.js").fileDownload("AntiKick.json"), "binary").toString();
+        // // 解密
+        // let key = process.env.LINE_ALPHAT_JSONKEY;
+        // let data = crypto.decrypt(rawData, key);
 
-        // data = require('fs').readFileSync("AntiKickRaw.json").toString();
+        let data = require('fs').readFileSync("AntiKickRaw.json").toString();
 
         // encode
         let obj;
@@ -49,15 +49,17 @@ const saveConfigToDbox = async () => {
 const main = async () => {
     await loadConfigFromDbox();
     console.log(config)
+
     let bot1 = new LineBot1(config.auth['u33a9a527c6ac1b24e0e4e35dde60c79d']);
-    let bot2 = new LineBot2(config.auth['uf0073964d53b22f4f404a8fb8f7a9e3e']);
     bot1.LINE.groupStatus = config.groupStatus;
+    config.auth['u33a9a527c6ac1b24e0e4e35dde60c79d'].authToken = bot1.client.authToken;
+
+    let bot2 = new LineBot2(config.auth['ub926d3162aab1d3fbf975d2c56be69aa']);
     bot2.LINE.groupStatus = config.groupStatus;
+    config.auth['ub926d3162aab1d3fbf975d2c56be69aa'].authToken = bot2.client.authToken;
 
     // save to dropbox
-    config.auth['u33a9a527c6ac1b24e0e4e35dde60c79d'].authToken = bot1.client.authToken;
-    config.auth['uf0073964d53b22f4f404a8fb8f7a9e3e'].authToken = bot2.client.authToken;
-    // await saveConfigToDbox();
+    await saveConfigToDbox();
     // console.log(bot1.client.authToken)
 
     // check cfg
@@ -67,7 +69,7 @@ const main = async () => {
 
         if (cfgstr && cfgstr != newstr) {
             console.log(config)
-            // await saveConfigToDbox();
+            await saveConfigToDbox();
         }
         cfgstr = newstr;
 

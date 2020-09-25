@@ -35,7 +35,7 @@ class LINE extends Command {
     }
 
     get myBot() {
-        const bot = ['u33a9a527c6ac1b24e0e4e35dde60c79d', 'uf0073964d53b22f4f404a8fb8f7a9e3e'];
+        const bot = ['u33a9a527c6ac1b24e0e4e35dde60c79d', 'ub926d3162aab1d3fbf975d2c56be69aa'];
         return bot;
     }
     get myAdmin() {
@@ -175,10 +175,9 @@ class LINE extends Command {
         let receiver = messages.to;
         let sender = messages._from;
 
-        this.command('Hello', ['Hi', 'who is this?']);
-        this.command('who is bot', this.getProfile.bind(this));
-
         if (this.isAdminOrBot(sender)) {
+            this.command('Hello', ['Hi', 'who is this?']);
+            this.command('who is bot', this.getProfile.bind(this));
 
             this.command('.status', this.getStatus.bind(this));
             this.command('.speed', this.getSpeed.bind(this));
