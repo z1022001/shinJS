@@ -4,15 +4,11 @@ var moment = require('moment');
 
 class LineConnect extends LineAPI {
 
-    constructor(options) {
-        super();
+    constructor(auth) {
+        super(auth);
 
-        if (typeof options !== 'undefined') {
-            this.authToken = options.authToken;
-            this.email = options.email;
-            this.password = options.password;
-            this.certificate = options.certificate;
-            this.config.Headers['X-Line-Access'] = options.authToken || "";
+        if (typeof auth !== 'undefined') {
+            this.config.Headers['X-Line-Access'] = auth.authToken || "";
         }
     }
 

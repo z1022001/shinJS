@@ -3,8 +3,8 @@ const config = require('./config');
 const { Message, OpType, Location, Profile } = require('../curve-thrift/line_types');
 
 class LINE extends Command {
-    constructor() {
-        super();
+    constructor(auth) {
+        super(auth);
         this.checkReader = [];
         this.botStatus = {
             // cancelInvitation: 0,

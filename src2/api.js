@@ -26,14 +26,21 @@ var reqx = new LoginRequest();
 var reqxy = new LoginRequest();
 
 class LineAPI {
-    constructor() {
+    constructor(auth) {
         this.config = config;
         this.setTHttpClient();
         this.axz = false;
         this.axy = false;
         this.gdLine = "http://gd2.line.naver.jp";
         this.gdLine2 = "http://gf.line.naver.jp";
-        this.botmid = '';
+
+        if (typeof auth !== 'undefined') {
+            this.authToken = auth.authToken;
+            this.email = auth.email;
+            this.password = auth.password;
+            this.certificate = auth.certificate;
+            this.botmid = auth.botid;
+        }
     }
 
     setTHttpClient(options = {
@@ -149,7 +156,7 @@ class LineAPI {
                             this.setTHttpClient(this.options);
                             this._authConn();
                             this._client.pinCode = success.pinCode;
-                            
+
                             let pinCodeString =
                                 "\n\n" +
                                 "=============================\n" +
@@ -359,7 +366,7 @@ class LineAPI {
                 formatType = 'jpg';
                 break;
         }
-        let dir =`${__dirname}/../download`;
+        let dir = `${__dirname}/../download`;
         if (!fs.existsSync(dir)) {
             await fs.mkdirSync(dir);
         }

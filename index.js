@@ -50,22 +50,24 @@ const main = async () => {
     bot2.LINE.groupStatus = config.groupStatus;
 
     // save to dropbox
-    config.auth['u33a9a527c6ac1b24e0e4e35dde60c79d'].authToken = bot1.LINE.config.tokenn;
-    config.auth['uf0073964d53b22f4f404a8fb8f7a9e3e'].authToken = bot2.LINE.config.tokenn;
-    await saveConfigToDbox();
+    config.auth['u33a9a527c6ac1b24e0e4e35dde60c79d'].authToken = bot1.client.authToken;
+    config.auth['uf0073964d53b22f4f404a8fb8f7a9e3e'].authToken = bot2.client.authToken;
+    // await saveConfigToDbox();
+    // console.log(bot1.client.authToken)
 
-    // // check cfg
-    // let cfgstr;
-    // const debug = async () => {
-    //     let newstr = JSON.stringify(config, null, 2);
+    // check cfg
+    let cfgstr;
+    const debug = async () => {
+        let newstr = JSON.stringify(config, null, 2);
 
-    //     if (cfgstr != newstr) {
-    //        await   saveConfigToDbox();
-    //     }
-    //     cfgstr = newstr;
+        if (cfgstr && cfgstr != newstr) {
+            console.log(config)
+            // await saveConfigToDbox();
+        }
+        cfgstr = newstr;
 
-    //     setTimeout(debug, 500)
-    // }; debug();
+        setTimeout(debug, 500)
+    }; debug();
 
 }; main();
 

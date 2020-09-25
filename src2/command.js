@@ -5,8 +5,8 @@ let exec = require('child_process').exec;
 
 class Command extends LineAPI {
 
-    constructor() {
-        super();
+    constructor(auth) {
+        super(auth);
         this.spamName = [];
     }
 

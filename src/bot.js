@@ -3,14 +3,10 @@ const line = require('./main.js');
 
 class bot {
     constructor(auth) {
-        this.LINE = new line();
+        this.LINE = new line(auth);
         this.client = new LineConnect(auth);
 
         this.client.startx().then(async (res) => {
-
-            let { mid } = await this.client._client.getProfile();
-            console.log(mid);
-            this.LINE.botmid = mid;
 
             while (true) {
                 try {
