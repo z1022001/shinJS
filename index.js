@@ -40,6 +40,11 @@ const saveConfigToDbox = async () => {
     require('fs').writeFileSync("AntiKickRaw.json", JSON.stringify(config, null, 2));
 }
 
+// const test = async () => {
+//     await loadConfigFromDbox();
+//     await saveConfigToDbox();
+// };
+// test();
 
 const main = async () => {
     await loadConfigFromDbox();
@@ -69,7 +74,8 @@ const main = async () => {
         setTimeout(debug, 500)
     }; debug();
 
-}; main();
+};
+main();
 
 
 
