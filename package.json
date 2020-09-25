@@ -24,6 +24,8 @@
   "dependencies": {
     "bluebird": "^3.7.2",
     "bufferutil": "^4.0.1",
+    "dropbox": "^5.2.1",
+    "isomorphic-fetch": "^3.0.0",
     "mime": "^2.2.0",
     "moment": "^2.18.1",
     "request": "^2.83.0",

@@ -1,9 +1,11 @@
 .DS_Store
 node_modules
 line.thrift
-src/bot.js
-src/tmp
-test.js
-download/
 
+src/tmp
+download/
 .vscode/
+
+debug.js
+AntiKickRaw.json
+AntiKick.json
